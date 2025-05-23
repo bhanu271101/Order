@@ -114,7 +114,7 @@ public class OrderSerivce {
                 throw new ProductNotFoundException("Item is out of stock");
             }
                 
-                ResponseEntity<AddressEntity> response1=restTemplate.getForEntity("http://localhost:8080/getDefaultAddressForOrder/{token}",AddressEntity.class,token);
+                ResponseEntity<AddressEntity> response1=restTemplate.getForEntity("https://mobileapp-4.onrender.com/getDefaultAddressForOrder/{token}",AddressEntity.class,token);
                 AddressEntity addressEntity=response1.getBody();
                 int quantity=orderDto.getQuantity();
                 double price=quantity*product.getPrice();
@@ -222,7 +222,7 @@ public class OrderSerivce {
         }
         String authHeader=httpServletRequest.getHeader("Authorization");
         String token=authHeader.substring(7);
-        ResponseEntity<AddressEntity> response1=restTemplate.getForEntity("http://localhost:8080/getDefaultAddressForOrder/{token}",AddressEntity.class,token);
+        ResponseEntity<AddressEntity> response1=restTemplate.getForEntity("https://mobileapp-4.onrender.com/getDefaultAddressForOrder/{token}",AddressEntity.class,token);
         AddressEntity addressEntity=response1.getBody();
         List<OrderEntity> orderEntities=new ArrayList<>();
         for(Long cartId:cartIds)
