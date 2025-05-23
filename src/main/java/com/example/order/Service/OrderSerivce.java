@@ -66,12 +66,11 @@ public class OrderSerivce {
     @Autowired
     private RedisCacheManager redisCacheManager;
 
-    @Autowired
-    private OrderSerivce self;
+   
 
     public void cacheProxyForBuyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> ids)
     {
-        self.buyFromCart(userId, httpServletRequest, ids);
+        this.buyFromCart(userId, httpServletRequest, ids);
     }
 
     private Long generateRandomOrderId() {
