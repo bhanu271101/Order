@@ -52,7 +52,7 @@ public class CartService {
         }
         CartEntity cartEntity=mapper.cartDtoToCartEntity(cartDTO);
         Long mobileId=cartDTO.getMobileId();
-        ResponseEntity<ProductDTO> response=restTemplate.getForEntity("http://localhost:8086/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
+        ResponseEntity<ProductDTO> response=restTemplate.getForEntity("https://product-0gme.onrender.com/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
         ProductDTO productDTO=response.getBody();
         if(productDTO.getQuantity()<cartDTO.getQuantity())
         {

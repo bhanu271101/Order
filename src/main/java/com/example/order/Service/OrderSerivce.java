@@ -106,7 +106,7 @@ public class OrderSerivce {
         
         
         try{
-            ResponseEntity<ProductDTO> response=restTemplate.getForEntity("http://localhost:8086/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
+            ResponseEntity<ProductDTO> response=restTemplate.getForEntity("https://product-0gme.onrender.com/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
             ProductDTO product=response.getBody();
             if(product.getQuantity()<orderDto.getQuantity())
             {
@@ -239,7 +239,7 @@ public class OrderSerivce {
                 Long mobileId=cartEntity.getMobileId();
                 try
                 {
-                ResponseEntity<ProductDTO> response=restTemplate.getForEntity("http://localhost:8086/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
+                ResponseEntity<ProductDTO> response=restTemplate.getForEntity("https://product-0gme.onrender.com/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
                 ProductDTO product=response.getBody();
                 
                 if(product.getQuantity()<cartEntity.getQuantity())
