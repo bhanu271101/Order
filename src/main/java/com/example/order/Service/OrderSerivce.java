@@ -68,10 +68,7 @@ public class OrderSerivce {
 
    
 
-    public void cacheProxyForBuyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> ids)
-    {
-        this.buyFromCart(userId, httpServletRequest, ids);
-    }
+    
 
     private Long generateRandomOrderId() {
         Random random = new Random();
@@ -212,7 +209,6 @@ public class OrderSerivce {
         rabbitTemplate.convertAndSend("hub-exchange","hub.delete.queue", orderId);
     }
 
-    @CacheEvict(value={"cart","orders"}, key="#userId")
     public void buyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> cartIds)
     {
         if(userId==null)
@@ -262,6 +258,8 @@ public class OrderSerivce {
                     rabbitTemplate.convertAndSend("hub-exchange","hub.queue",orderDto);
                     orderEntities.add(orderEntity);
                     cartService.deleteCartItems(cartId);
+                    redisCacheManager.getCache("orders").evict(orderEntity.getUserId());
+                    redisCacheManager.getCache("cart").evict(orderEntity.getUserId());
             }
             catch(HttpServerErrorException httpServerErrorException)
             {

@@ -33,6 +33,12 @@ public class CartController {
         return cartService.getCountOfItems(userId);
     }
 
+     @GetMapping("/cronjob")
+    public String dummyForCronjob()
+    {
+        return "Cronjob ran successfully";
+    }
+
     @PostMapping("/addToCart")
     public String addToCart(HttpServletRequest httpServletRequest,@RequestBody CartDTO cartDTO)
     {

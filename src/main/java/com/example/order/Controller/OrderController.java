@@ -58,7 +58,7 @@ public class OrderController {
         List<Long> idList = Arrays.stream(ids)
             .map(Long::parseLong)  // Convert each String in the array to Long
             .collect(Collectors.toList());
-        orderSerivce.cacheProxyForBuyFromCart(userId, httpServletRequest, idList);
+        orderSerivce.buyFromCart(userId, httpServletRequest, idList);
         return "Order Placed Successfully";
     }
 
