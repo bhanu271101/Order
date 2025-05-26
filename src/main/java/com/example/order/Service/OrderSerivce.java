@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.client.HttpClientErrorException;
@@ -117,7 +119,10 @@ public class OrderSerivce {
                 AddressEntity addressEntity=response1.getBody();
                 int quantity=orderDto.getQuantity();
                 double price=quantity*product.getPrice();
-                ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,token);
+                HttpHeaders httpHeaders=new HttpHeaders();
+                httpHeaders.set("Authorization","Bearer "+token);
+                HttpEntity<String> httpEntity=new HttpEntity<>(httpHeaders);
+                ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,httpEntity);
                 UserDto userDto=userResponse.getBody();
                 String mobileName=product.getMobileName();
                 orderEntity.setMobileName(mobileName);
@@ -246,7 +251,10 @@ public class OrderSerivce {
                 {
                     throw new ProductNotFoundException("Item is out of stock");
                 }
-                     ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,token);
+                    HttpHeaders httpHeaders=new HttpHeaders();
+                    httpHeaders.set("Authorization","Bearer "+token);
+                    HttpEntity<String> httpEntity=new HttpEntity<>(httpHeaders);
+                    ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,httpEntity);
                     UserDto userDto=userResponse.getBody();
                      int quantity=cartEntity.getQuantity();
                     double price=quantity*product.getPrice();
