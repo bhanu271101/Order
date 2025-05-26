@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import com.example.order.Dto.OrderDto;
 import com.example.order.Dto.OrderStatusUpdateDTo;
 import com.example.order.Dto.ProductDTO;
+import com.example.order.Dto.UserDto;
 import com.example.order.Entity.AddressEntity;
 import com.example.order.Entity.CartEntity;
 import com.example.order.Entity.OrderEntity;
@@ -35,6 +36,7 @@ import com.example.order.Exception.SessionTimeOutException;
 import com.example.order.Mapper.Mapper;
 import com.example.order.Repository.OrderRepository;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 
@@ -60,7 +62,8 @@ public class OrderSerivce {
     @Autowired
     private CartService cartService;
 
-
+    @Autowired
+    private EmailService emailService;
    
 
     @Autowired
@@ -89,7 +92,7 @@ public class OrderSerivce {
    
 
     @CacheEvict(value = "orders",key="#userId",condition = "#userId != null")
-    public String placeOrder(String userId,HttpServletRequest httpServletRequest,OrderDto orderDto)
+    public String placeOrder(String userId,HttpServletRequest httpServletRequest,OrderDto orderDto) throws MessagingException
     {
         String authHeader=httpServletRequest.getHeader("Authorization");
         String token=authHeader.substring(7);
@@ -114,7 +117,8 @@ public class OrderSerivce {
                 AddressEntity addressEntity=response1.getBody();
                 int quantity=orderDto.getQuantity();
                 double price=quantity*product.getPrice();
-               
+                ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,token);
+                UserDto userDto=userResponse.getBody();
                 String mobileName=product.getMobileName();
                 orderEntity.setMobileName(mobileName);
                 orderEntity.setPrice(price);
@@ -128,7 +132,7 @@ public class OrderSerivce {
                 orderEntity.setAddress(addressEntity);
                 orderEntity.setOrderStatus(orderDto.getOrderStatus());
                 orderRepository.save(orderEntity);
-
+                emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),product.getMobileName(),addressEntity);
                 rabbitTemplate.convertAndSend("inventory-exchange","inventory.queue",orderDto);
                 rabbitTemplate.convertAndSend("hub-exchange","hub.queue",orderDto);
                 return "Order placed successfully";
@@ -209,7 +213,7 @@ public class OrderSerivce {
         rabbitTemplate.convertAndSend("hub-exchange","hub.delete.queue", orderId);
     }
 
-    public void buyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> cartIds)
+    public void buyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> cartIds) throws MessagingException
     {
         if(userId==null)
         {
@@ -242,6 +246,8 @@ public class OrderSerivce {
                 {
                     throw new ProductNotFoundException("Item is out of stock");
                 }
+                     ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUser",UserDto.class,token);
+                    UserDto userDto=userResponse.getBody();
                      int quantity=cartEntity.getQuantity();
                     double price=quantity*product.getPrice();
                     String mobileName=product.getMobileName();
@@ -257,6 +263,7 @@ public class OrderSerivce {
                     rabbitTemplate.convertAndSend("inventory-exchange","inventory.queue",orderDto);
                     rabbitTemplate.convertAndSend("hub-exchange","hub.queue",orderDto);
                     orderEntities.add(orderEntity);
+                    emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),product.getMobileName(),addressEntity);
                     cartService.deleteCartItems(cartId);
                     redisCacheManager.getCache("orders").evict(orderEntity.getUserId());
                     redisCacheManager.getCache("cart").evict(orderEntity.getUserId());

@@ -6,6 +6,7 @@ com\example\order\Dto\OrderDto.class
 com\example\order\Exception\ProductServiceNotAvailableException.class
 com\example\order\Exception\CartItemNotFoundException.class
 com\example\order\Dto\CartDTO.class
+com\example\order\Dto\UserDto.class
 com\example\order\Controller\OrderController.class
 com\example\order\Mapper\Mapper.class
 com\example\order\Exception\GlobalException.class
@@ -19,6 +20,7 @@ com\example\order\Config\WebConfig$1.class
 com\example\order\Service\OrderSerivce.class
 com\example\order\Authorization\JwtRequestFilter.class
 com\example\order\Repository\CartRepository.class
+com\example\order\Service\EmailService.class
 com\example\order\Entity\CartEntity.class
 com\example\order\Controller\CartController.class
 com\example\order\Exception\SessionTimeOutException.class

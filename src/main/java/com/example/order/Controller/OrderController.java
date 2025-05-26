@@ -19,6 +19,7 @@ import com.example.order.Dto.OrderDto;
 import com.example.order.Service.OrderSerivce;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -36,7 +37,7 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> createOrder(HttpServletRequest httpServletRequest,@RequestBody OrderDto orderDto) throws JsonProcessingException
+    public ResponseEntity<String> createOrder(HttpServletRequest httpServletRequest,@RequestBody OrderDto orderDto) throws JsonProcessingException, MessagingException
     {
         String userId=(String)httpServletRequest.getAttribute("userId");
         return new ResponseEntity<>(orderSerivce.placeOrder(userId,httpServletRequest,orderDto),HttpStatus.CREATED);
@@ -52,7 +53,7 @@ public class OrderController {
     }
 
     @PostMapping("/buyFromCart")
-    public String buyFromCart(HttpServletRequest httpServletRequest, @RequestParam("ids") String[] ids)
+    public String buyFromCart(HttpServletRequest httpServletRequest, @RequestParam("ids") String[] ids) throws MessagingException
     {
         String userId=(String)httpServletRequest.getAttribute("userId");
         List<Long> idList = Arrays.stream(ids)

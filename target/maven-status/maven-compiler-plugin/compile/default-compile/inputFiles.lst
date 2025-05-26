@@ -10,6 +10,7 @@ C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Dto\CartD
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Dto\OrderDto.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Dto\OrderStatusUpdateDTo.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Dto\ProductDTO.java
+C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Dto\UserDto.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Entity\AddressEntity.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Entity\CartEntity.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Entity\OrderEntity.java
@@ -25,5 +26,6 @@ C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\OrderAppl
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Repository\CartRepository.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Repository\OrderRepository.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Service\CartService.java
+C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Service\EmailService.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Service\OrderSerivce.java
 C:\Users\ajith\Desktop\MobileApp\order\src\main\java\com\example\order\Utility\OrderResponse.java
