@@ -133,6 +133,7 @@ public class OrderSerivce {
                 orderEntity.setOrderStatus(orderDto.getOrderStatus());
                 orderRepository.save(orderEntity);
                 List<ProductDTO> productsList=new ArrayList<>();
+                product.setQuantity(quantity);
                 productsList.add(product);
                 emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),productsList,addressEntity);
                 rabbitTemplate.convertAndSend("inventory-exchange","inventory.queue",orderDto);
@@ -275,6 +276,7 @@ public class OrderSerivce {
                 rabbitTemplate.convertAndSend("hub-exchange", "hub.queue", orderDto);
 
                 orderEntities.add(orderEntity);
+                product.setQuantity(quantity);
                 productsForEmail.add(product);  // Collect product for email
 
                 cartService.deleteCartItems(cartId);
