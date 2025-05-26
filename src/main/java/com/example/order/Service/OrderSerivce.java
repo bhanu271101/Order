@@ -132,7 +132,9 @@ public class OrderSerivce {
                 orderEntity.setAddress(addressEntity);
                 orderEntity.setOrderStatus(orderDto.getOrderStatus());
                 orderRepository.save(orderEntity);
-                emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),product.getMobileName(),addressEntity);
+                List<ProductDTO> productsList=new ArrayList<>();
+                productsList.add(product);
+                emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),productsList,addressEntity);
                 rabbitTemplate.convertAndSend("inventory-exchange","inventory.queue",orderDto);
                 rabbitTemplate.convertAndSend("hub-exchange","hub.queue",orderDto);
                 return "Order placed successfully";
@@ -213,73 +215,85 @@ public class OrderSerivce {
         rabbitTemplate.convertAndSend("hub-exchange","hub.delete.queue", orderId);
     }
 
-    public void buyFromCart(String userId,HttpServletRequest httpServletRequest,List<Long> cartIds) throws MessagingException
-    {
-        if(userId==null)
-        {
-            throw new SessionTimeOutException("User session expired login to continue");
+   public void buyFromCart(String userId, HttpServletRequest httpServletRequest, List<Long> cartIds) throws MessagingException {
+    if (userId == null) {
+        throw new SessionTimeOutException("User session expired login to continue");
+    }
+
+    String authHeader = httpServletRequest.getHeader("Authorization");
+    String token = authHeader.substring(7);
+
+    ResponseEntity<AddressEntity> response1 = restTemplate.getForEntity(
+        "https://mobileapp-4.onrender.com/getDefaultAddressForOrder/{token}", AddressEntity.class, token);
+    AddressEntity addressEntity = response1.getBody();
+
+    List<OrderEntity> orderEntities = new ArrayList<>();
+    List<ProductDTO> productsForEmail = new ArrayList<>();
+    UserDto userDto = null;
+
+    for (Long cartId : cartIds) {
+        CartEntity cartEntity = cartService.getCartById(cartId);
+        if (cartEntity == null) {
+            throw new CartItemNotFoundException("CartItem with Id " + cartId + " is not present");
         }
-        String authHeader=httpServletRequest.getHeader("Authorization");
-        String token=authHeader.substring(7);
-        ResponseEntity<AddressEntity> response1=restTemplate.getForEntity("https://mobileapp-4.onrender.com/getDefaultAddressForOrder/{token}",AddressEntity.class,token);
-        AddressEntity addressEntity=response1.getBody();
-        List<OrderEntity> orderEntities=new ArrayList<>();
-        for(Long cartId:cartIds)
-        {
-            System.out.println(cartId);
-            CartEntity cartEntity=cartService.getCartById(cartId);
-            if(cartEntity==null)
-            {
-                throw new CartItemNotFoundException("CartItem with Id"+cartId+"is not present");
-            }
-            OrderEntity orderEntity=mapper.cartEntityTOrderEntity(cartEntity);
-            
-            if(addressEntity!=null)
-            {
-                Long mobileId=cartEntity.getMobileId();
-                try
-                {
-                ResponseEntity<ProductDTO> response=restTemplate.getForEntity("https://product-0gme.onrender.com/product/getProductById/{mobileId}",ProductDTO.class,mobileId);
-                ProductDTO product=response.getBody();
-                
-                if(product.getQuantity()<cartEntity.getQuantity())
-                {
+
+        OrderEntity orderEntity = mapper.cartEntityTOrderEntity(cartEntity);
+
+        if (addressEntity != null) {
+            Long mobileId = cartEntity.getMobileId();
+            try {
+                ResponseEntity<ProductDTO> response = restTemplate.getForEntity(
+                    "https://product-0gme.onrender.com/product/getProductById/{mobileId}", ProductDTO.class, mobileId);
+                ProductDTO product = response.getBody();
+
+                if (product.getQuantity() < cartEntity.getQuantity()) {
                     throw new ProductNotFoundException("Item is out of stock");
                 }
-                     ResponseEntity<UserDto> userResponse=restTemplate.getForEntity("https://mobileapp-4.onrender.com/user/getUserForOrder/{token}",UserDto.class,token);
-                    UserDto userDto=userResponse.getBody();
-                     int quantity=cartEntity.getQuantity();
-                    double price=quantity*product.getPrice();
-                    String mobileName=product.getMobileName();
-                    orderEntity.setMobileName(mobileName);
-                    orderEntity.setPrice(price);
-                    orderEntity.setOrderId(generateRandomOrderId());
-                    orderEntity.setAddress(addressEntity);
-                    orderEntity.setUserId(userId);
-                    orderEntity.setOrderStatus("Order placed");
-                    OrderDto orderDto=mapper.orderToOrderDTO(orderEntity);
-                    orderDto.setAddress(addressEntity);
-                    orderDto.setOrderStatus("Order placed");
-                    rabbitTemplate.convertAndSend("inventory-exchange","inventory.queue",orderDto);
-                    rabbitTemplate.convertAndSend("hub-exchange","hub.queue",orderDto);
-                    orderEntities.add(orderEntity);
-                    emailService.sendOrderConfirmationMail(userDto.getEmail(),addressEntity.getUserName(),product.getMobileName(),addressEntity);
-                    cartService.deleteCartItems(cartId);
-                    redisCacheManager.getCache("orders").evict(orderEntity.getUserId());
-                    redisCacheManager.getCache("cart").evict(orderEntity.getUserId());
-            }
-            catch(HttpServerErrorException httpServerErrorException)
-            {
+
+                if (userDto == null) { // Fetch user info once
+                    ResponseEntity<UserDto> userResponse = restTemplate.getForEntity(
+                        "https://mobileapp-4.onrender.com/user/getUserForOrder/{token}", UserDto.class, token);
+                    userDto = userResponse.getBody();
+                }
+
+                int quantity = cartEntity.getQuantity();
+                double price = quantity * product.getPrice();
+                String mobileName = product.getMobileName();
+
+                orderEntity.setMobileName(mobileName);
+                orderEntity.setPrice(price);
+                orderEntity.setOrderId(generateRandomOrderId());
+                orderEntity.setAddress(addressEntity);
+                orderEntity.setUserId(userId);
+                orderEntity.setOrderStatus("Order placed");
+
+                OrderDto orderDto = mapper.orderToOrderDTO(orderEntity);
+                orderDto.setAddress(addressEntity);
+                orderDto.setOrderStatus("Order placed");
+
+                rabbitTemplate.convertAndSend("inventory-exchange", "inventory.queue", orderDto);
+                rabbitTemplate.convertAndSend("hub-exchange", "hub.queue", orderDto);
+
+                orderEntities.add(orderEntity);
+                productsForEmail.add(product);  // Collect product for email
+
+                cartService.deleteCartItems(cartId);
+                redisCacheManager.getCache("orders").evict(orderEntity.getUserId());
+                redisCacheManager.getCache("cart").evict(orderEntity.getUserId());
+
+            } catch (HttpServerErrorException httpServerErrorException) {
                 throw new RuntimeException("Product service is throwing internal server error");
-            }
-            catch(ResourceAccessException resourceAccessException)
-            {
+            } catch (ResourceAccessException resourceAccessException) {
                 throw new ProductServiceNotAvailableException("Product service is not available");
             }
         }
-
-        }
-        orderRepository.saveAll(orderEntities);
     }
+
+    orderRepository.saveAll(orderEntities);
+
+    if (userDto != null && !productsForEmail.isEmpty()) {
+        emailService.sendOrderConfirmationMail(userDto.getEmail(),userDto.getName(), productsForEmail, addressEntity);
+    }
+}
 
 }
